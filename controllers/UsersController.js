@@ -11,6 +11,7 @@ const { ObjectId } = mongo;
 
 class UsersController {
   static async postNew(req, res) {
+    const queue = new Queue('userQueue');
     const { email, password } = req.body;
     if (!email) {
       res.status(400).json({ error: 'Missing email' });
@@ -27,6 +28,7 @@ class UsersController {
       } else {
         col.insertOne({ email, password: hashpwd });
         const newUser = await col.findOne({ email }, { projection: { email: 1 } });
+        queue.add({ userId: insertedId });
         res.status(200).json({ id: newUser._id, email: newUser.email });
       }
     } catch (error) {
